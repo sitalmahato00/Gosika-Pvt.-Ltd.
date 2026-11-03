@@ -12,13 +12,15 @@ import {
     ArrowDown,
     ArrowUp,
     RefreshCw,
-    History
+    History,
+    Pencil
 } from 'lucide-react';
 
 export default function Index({ items, suppliers, stats, filters }) {
     const [createModalOpen, setCreateModalOpen] = useState(false);
     const [adjustModalOpen, setAdjustModalOpen] = useState(false);
     const [selectedItem, setSelectedItem] = useState(null);
+    const [editingItem, setEditingItem] = useState(null);
     const [imagePreview, setImagePreview] = useState(null);
 
     const [search, setSearch] = useState(filters.search || '');
@@ -54,16 +56,62 @@ export default function Index({ items, suppliers, stats, filters }) {
         }, { preserveState: true });
     };
 
-    const handleCreate = (e) => {
+    const handleOpenCreate = () => {
+        setEditingItem(null);
+        form.reset();
+        form.clearErrors();
+        setImagePreview(null);
+        setCreateModalOpen(true);
+    };
+
+    const handleOpenEdit = (item) => {
+        setEditingItem(item);
+        form.setData({
+            name: item.name || '',
+            category: item.category || 'Stationery',
+            quantity: item.quantity ?? 0,
+            unit: item.unit || 'pcs',
+            min_stock_threshold: item.min_stock_threshold ?? 1,
+            unit_price: item.unit_price || '',
+            supplier_id: item.supplier_id || '',
+            location: item.location || '',
+            notes: item.notes || '',
+            image: null,
+        });
+        form.clearErrors();
+        setImagePreview(item.image_url || null);
+        setCreateModalOpen(true);
+    };
+
+    const handleCloseItemForm = () => {
+        setCreateModalOpen(false);
+        setEditingItem(null);
+        setImagePreview(null);
+        form.reset();
+        form.clearErrors();
+    };
+
+    const handleSaveItem = (e) => {
         e.preventDefault();
-        form.post('/inventory', {
+        const options = {
             forceFormData: true,
             onSuccess: () => {
                 form.reset();
                 setImagePreview(null);
                 setCreateModalOpen(false);
+                setEditingItem(null);
             },
-        });
+        };
+
+        if (editingItem) {
+            form.transform((data) => ({ ...data, _method: 'put' })).post(`/inventory/${editingItem.id}`, {
+                ...options,
+                onFinish: () => form.transform((data) => data),
+            });
+            return;
+        }
+
+        form.post('/inventory', options);
     };
 
     const handleOpenAdjust = (item) => {
@@ -97,7 +145,7 @@ export default function Index({ items, suppliers, stats, filters }) {
                 </div>
                 <div>
                     <button
-                        onClick={() => setCreateModalOpen(true)}
+                        onClick={handleOpenCreate}
                         className="inline-flex items-center gap-1.5 px-3.5 py-2 text-xs font-bold text-white bg-[#FF5500] hover:bg-[#E04B00] rounded-lg shadow-xs transition"
                     >
                         <Plus className="h-4 w-4" />
@@ -261,14 +309,25 @@ export default function Index({ items, suppliers, stats, filters }) {
                                                 रू {(item.quantity * item.unit_price).toLocaleString()}
                                             </td>
                                             <td className="px-5 py-3 text-right">
-                                                <button
-                                                    type="button"
-                                                    onClick={() => handleOpenAdjust(item)}
-                                                    className="inline-flex items-center gap-1 px-2.5 py-1 text-xs font-bold text-[#FF5500] bg-[#FFF0E8] hover:bg-orange-100 rounded-lg transition"
-                                                >
-                                                    <RefreshCw className="h-3 w-3" />
-                                                    <span>Stock In/Out</span>
-                                                </button>
+                                                <div className="inline-flex items-center gap-2">
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => handleOpenEdit(item)}
+                                                        className="inline-flex items-center gap-1 px-2 py-1 text-xs font-bold text-gray-600 hover:text-[#FF5500] rounded-lg transition"
+                                                        title={`Edit ${item.name}`}
+                                                    >
+                                                        <Pencil className="h-3 w-3" />
+                                                        <span>Edit</span>
+                                                    </button>
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => handleOpenAdjust(item)}
+                                                        className="inline-flex items-center gap-1 px-2.5 py-1 text-xs font-bold text-[#FF5500] bg-[#FFF0E8] hover:bg-orange-100 rounded-lg transition"
+                                                    >
+                                                        <RefreshCw className="h-3 w-3" />
+                                                        <span>Stock In/Out</span>
+                                                    </button>
+                                                </div>
                                             </td>
                                         </tr>
                                     );
@@ -290,10 +349,10 @@ export default function Index({ items, suppliers, stats, filters }) {
             {/* Modal: Add Item */}
             <Modal
                 isOpen={createModalOpen}
-                onClose={() => setCreateModalOpen(false)}
-                title="Register Consumable Inventory Item"
+                onClose={handleCloseItemForm}
+                title={editingItem ? `Edit Inventory Item: ${editingItem.item_code}` : 'Register Consumable Inventory Item'}
             >
-                <form onSubmit={handleCreate} className="space-y-4">
+                <form onSubmit={handleSaveItem} className="space-y-4">
                     {/* Item Image Upload */}
                     <div className="flex items-center gap-3 p-3 bg-gray-50 border border-gray-200 rounded-xl">
                         <div className="h-14 w-14 rounded-lg bg-white border border-gray-200 flex items-center justify-center p-1 shrink-0 overflow-hidden shadow-2xs">
@@ -435,7 +494,7 @@ export default function Index({ items, suppliers, stats, filters }) {
                     <div className="flex justify-end gap-2 pt-2">
                         <button
                             type="button"
-                            onClick={() => setCreateModalOpen(false)}
+                            onClick={handleCloseItemForm}
                             className="px-4 py-2 text-xs font-semibold text-gray-600 bg-gray-100 rounded-lg"
                         >
                             Cancel
@@ -445,7 +504,7 @@ export default function Index({ items, suppliers, stats, filters }) {
                             disabled={form.processing}
                             className="px-5 py-2 text-xs font-bold text-white bg-[#FF5500] hover:bg-[#E04B00] rounded-lg shadow-sm"
                         >
-                            Save Item
+                            {editingItem ? 'Save Changes' : 'Save Item'}
                         </button>
                     </div>
                 </form>

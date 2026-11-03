@@ -13,13 +13,15 @@ import {
     User,
     ShieldAlert,
     Cpu,
-    CheckCircle2
+    CheckCircle2,
+    Pencil
 } from 'lucide-react';
 
 export default function Index({ assets, suppliers, employees, stats, filters }) {
     const [createModalOpen, setCreateModalOpen] = useState(false);
     const [maintenanceModalOpen, setMaintenanceModalOpen] = useState(false);
     const [selectedAsset, setSelectedAsset] = useState(null);
+    const [editingAsset, setEditingAsset] = useState(null);
     const [imagePreview, setImagePreview] = useState(null);
 
     const [search, setSearch] = useState(filters.search || '');
@@ -55,16 +57,64 @@ export default function Index({ assets, suppliers, employees, stats, filters }) 
         router.get('/assets', { search, category, status }, { preserveState: true });
     };
 
-    const handleCreate = (e) => {
+    const handleOpenCreate = () => {
+        setEditingAsset(null);
+        form.reset();
+        form.clearErrors();
+        setImagePreview(null);
+        setCreateModalOpen(true);
+    };
+
+    const handleOpenEdit = (asset) => {
+        setEditingAsset(asset);
+        form.setData({
+            name: asset.name || '',
+            category: asset.category || 'IT Equipment',
+            serial_number: asset.serial_number || '',
+            supplier_id: asset.supplier_id || '',
+            purchase_date: asset.purchase_date?.slice(0, 10) || '',
+            purchase_cost: asset.purchase_cost || '',
+            warranty_expiry: asset.warranty_expiry?.slice(0, 10) || '',
+            condition: asset.condition || 'good',
+            assigned_employee_id: asset.assigned_employee_id || '',
+            status: asset.status || 'in_use',
+            notes: asset.notes || '',
+            image: null,
+        });
+        form.clearErrors();
+        setImagePreview(asset.image_url || null);
+        setCreateModalOpen(true);
+    };
+
+    const handleCloseAssetForm = () => {
+        setCreateModalOpen(false);
+        setEditingAsset(null);
+        setImagePreview(null);
+        form.reset();
+        form.clearErrors();
+    };
+
+    const handleSaveAsset = (e) => {
         e.preventDefault();
-        form.post('/assets', {
+        const options = {
             forceFormData: true,
             onSuccess: () => {
                 form.reset();
                 setImagePreview(null);
                 setCreateModalOpen(false);
+                setEditingAsset(null);
             },
-        });
+        };
+
+        if (editingAsset) {
+            form.transform((data) => ({ ...data, _method: 'put' })).post(`/assets/${editingAsset.id}`, {
+                ...options,
+                onFinish: () => form.transform((data) => data),
+            });
+            return;
+        }
+
+        form.post('/assets', options);
     };
 
     const handleOpenMaintenance = (ast) => {
@@ -98,7 +148,7 @@ export default function Index({ assets, suppliers, employees, stats, filters }) 
                 </div>
                 <div>
                     <button
-                        onClick={() => setCreateModalOpen(true)}
+                        onClick={handleOpenCreate}
                         className="inline-flex items-center gap-1.5 px-3.5 py-2 text-xs font-bold text-white bg-[#FF5500] hover:bg-[#E04B00] rounded-lg shadow-xs transition"
                     >
                         <Plus className="h-4 w-4" />
@@ -239,14 +289,25 @@ export default function Index({ assets, suppliers, employees, stats, filters }) 
                                             </Badge>
                                         </td>
                                         <td className="px-5 py-3 text-right">
-                                            <button
-                                                type="button"
-                                                onClick={() => handleOpenMaintenance(ast)}
-                                                className="inline-flex items-center gap-1 text-[11px] font-bold text-[#FF5500] hover:underline"
-                                            >
-                                                <Wrench className="h-3.5 w-3.5" />
-                                                <span>Log Service</span>
-                                            </button>
+                                            <div className="inline-flex items-center gap-3">
+                                                <button
+                                                    type="button"
+                                                    onClick={() => handleOpenEdit(ast)}
+                                                    className="inline-flex items-center gap-1 text-[11px] font-bold text-gray-600 hover:text-[#FF5500]"
+                                                    title={`Edit ${ast.name}`}
+                                                >
+                                                    <Pencil className="h-3.5 w-3.5" />
+                                                    <span>Edit</span>
+                                                </button>
+                                                <button
+                                                    type="button"
+                                                    onClick={() => handleOpenMaintenance(ast)}
+                                                    className="inline-flex items-center gap-1 text-[11px] font-bold text-[#FF5500] hover:underline"
+                                                >
+                                                    <Wrench className="h-3.5 w-3.5" />
+                                                    <span>Log Service</span>
+                                                </button>
+                                            </div>
                                         </td>
                                     </tr>
                                 ))
@@ -267,10 +328,10 @@ export default function Index({ assets, suppliers, employees, stats, filters }) 
             {/* Modal: Register Asset */}
             <Modal
                 isOpen={createModalOpen}
-                onClose={() => setCreateModalOpen(false)}
-                title="Register Company Fixed Asset"
+                onClose={handleCloseAssetForm}
+                title={editingAsset ? `Edit Asset: ${editingAsset.asset_code}` : 'Register Company Fixed Asset'}
             >
-                <form onSubmit={handleCreate} className="space-y-4">
+                <form onSubmit={handleSaveAsset} className="space-y-4">
                     {/* Asset Image Upload */}
                     <div className="flex items-center gap-3 p-3 bg-gray-50 border border-gray-200 rounded-xl">
                         <div className="h-14 w-14 rounded-lg bg-white border border-gray-200 flex items-center justify-center p-1 shrink-0 overflow-hidden shadow-2xs">
@@ -407,7 +468,7 @@ export default function Index({ assets, suppliers, employees, stats, filters }) 
                     <div className="flex justify-end gap-2 pt-2">
                         <button
                             type="button"
-                            onClick={() => setCreateModalOpen(false)}
+                            onClick={handleCloseAssetForm}
                             className="px-4 py-2 text-xs font-semibold text-gray-600 bg-gray-100 rounded-lg"
                         >
                             Cancel
@@ -417,7 +478,7 @@ export default function Index({ assets, suppliers, employees, stats, filters }) 
                             disabled={form.processing}
                             className="px-5 py-2 text-xs font-bold text-white bg-[#FF5500] hover:bg-[#E04B00] rounded-lg shadow-sm"
                         >
-                            Register Asset
+                            {editingAsset ? 'Save Changes' : 'Register Asset'}
                         </button>
                     </div>
                 </form>

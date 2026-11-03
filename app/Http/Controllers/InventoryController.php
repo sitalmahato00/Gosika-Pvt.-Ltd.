@@ -6,6 +6,7 @@ use App\Models\InventoryItem;
 use App\Models\InventoryTransaction;
 use App\Models\Supplier;
 use App\Models\AuditLog;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 use Inertia\Inertia;
@@ -90,6 +91,53 @@ class InventoryController extends Controller
         AuditLog::log('create', 'inventory', $item->id, "Created inventory item: {$item->name} ({$item->item_code})");
 
         return back()->with('success', 'Inventory item added successfully.');
+    }
+
+    public function update(Request $request, InventoryItem $inventoryItem)
+    {
+        $validated = $request->validate([
+            'name' => ['required', 'string', 'max:255'],
+            'category' => ['required', 'string', 'max:100'],
+            'quantity' => ['required', 'integer', 'min:0'],
+            'unit' => ['required', 'string', 'max:20'],
+            'min_stock_threshold' => ['required', 'integer', 'min:1'],
+            'unit_price' => ['required', 'numeric', 'min:0'],
+            'supplier_id' => ['nullable', 'exists:suppliers,id'],
+            'location' => ['nullable', 'string', 'max:100'],
+            'notes' => ['nullable', 'string'],
+            'image' => ['nullable', 'image', 'mimes:jpeg,png,jpg,webp', 'max:3072'],
+        ]);
+
+        $oldImagePath = $inventoryItem->image_path;
+        $previousQuantity = $inventoryItem->quantity;
+
+        if ($request->hasFile('image')) {
+            $validated['image_path'] = $request->file('image')->store('inventory', 'public');
+        }
+
+        DB::transaction(function () use ($validated, $inventoryItem, $previousQuantity) {
+            $inventoryItem->update($validated);
+
+            if ($inventoryItem->quantity !== $previousQuantity) {
+                InventoryTransaction::create([
+                    'inventory_item_id' => $inventoryItem->id,
+                    'type' => 'adjustment',
+                    'quantity' => $inventoryItem->quantity,
+                    'balance_after' => $inventoryItem->quantity,
+                    'date' => Carbon::today()->format('Y-m-d'),
+                    'notes' => 'Quantity corrected while editing inventory item',
+                    'logged_by' => auth()->id(),
+                ]);
+            }
+
+            AuditLog::log('update', 'inventory', $inventoryItem->id, "Updated inventory item: {$inventoryItem->name}");
+        });
+
+        if (isset($validated['image_path']) && $oldImagePath && Storage::disk('public')->exists($oldImagePath)) {
+            Storage::disk('public')->delete($oldImagePath);
+        }
+
+        return back()->with('success', 'Inventory item updated successfully.');
     }
 
     public function stockAdjustment(Request $request, InventoryItem $inventoryItem)

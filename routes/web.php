@@ -124,6 +124,7 @@ Route::middleware('auth')->group(function () {
 
     Route::get('/inventory', [InventoryController::class, 'index'])->name('inventory.index');
     Route::post('/inventory', [InventoryController::class, 'store'])->name('inventory.store');
+    Route::put('/inventory/{inventoryItem}', [InventoryController::class, 'update'])->name('inventory.update');
     Route::post('/inventory/{inventoryItem}/adjust', [InventoryController::class, 'stockAdjustment'])->name('inventory.adjust');
 
     Route::get('/suppliers', [SupplierController::class, 'index'])->name('suppliers.index');
