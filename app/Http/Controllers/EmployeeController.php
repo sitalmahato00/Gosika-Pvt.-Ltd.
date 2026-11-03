@@ -120,7 +120,7 @@ class EmployeeController extends Controller
         return redirect()->route('employees.show', $employee->id)->with('success', 'Employee registered successfully with generated CR80 ID Card.');
     }
 
-    public function show(Employee $employee, Request $request)
+    public function show(Employee $employee, Request $request, IdCardService $idCardService)
     {
         $employee->load(['department', 'designation', 'latestIdCard']);
 
@@ -132,7 +132,6 @@ class EmployeeController extends Controller
         $idCards = EmployeeIdCard::where('employee_id', $employee->id)->latest()->get();
         $auditLogs = AuditLog::where('module', 'employees')->where('record_id', $employee->id)->latest()->get();
 
-        $idCardService = new IdCardService();
         $qrCodeUri = $idCardService->generateQrCodeDataUri($employee);
 
         return Inertia::render('HR/Employees/Show', [
