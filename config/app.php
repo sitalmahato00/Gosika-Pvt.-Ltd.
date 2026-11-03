@@ -56,7 +56,7 @@ return [
 
     'admin' => [
         'name' => env('ADMIN_NAME', 'GOSIKA Administrator'),
-        'email' => env('ADMIN_EMAIL'),
+        'email' => 'infosysgosika@gmail.com',
         'password' => env('ADMIN_PASSWORD'),
     ],
 

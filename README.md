@@ -56,7 +56,7 @@ If you discover a security vulnerability within Laravel, please send an e-mail t
 
 ## Initial administrator account
 
-Before running `php artisan db:seed`, set `ADMIN_EMAIL` and a unique `ADMIN_PASSWORD` of at least 12 characters in your local `.env` file. `ADMIN_NAME` is optional. The seeder will not create the administrator account without these values. Never commit `.env` or use shared default credentials.
+Before running `php artisan db:seed`, set a unique `ADMIN_PASSWORD` of at least 12 characters in your local `.env` file. The seeder creates only the `infosysgosika@gmail.com` administrator account; `ADMIN_NAME` is optional. It does not delete existing database records. Never commit `.env` or use shared default credentials.
 
 ## License
 
