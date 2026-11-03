@@ -107,7 +107,8 @@ export default function Index({ assets, suppliers, employees, stats, filters }) 
         };
 
         if (editingAsset) {
-            form.transform((data) => ({ ...data, _method: 'put' })).post(`/assets/${editingAsset.id}`, {
+            form.transform((data) => ({ ...data, _method: 'put' }));
+            form.post(`/assets/${editingAsset.id}`, {
                 ...options,
                 onFinish: () => form.transform((data) => data),
             });

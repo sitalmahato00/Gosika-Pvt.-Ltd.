@@ -104,7 +104,8 @@ export default function Index({ items, suppliers, stats, filters }) {
         };
 
         if (editingItem) {
-            form.transform((data) => ({ ...data, _method: 'put' })).post(`/inventory/${editingItem.id}`, {
+            form.transform((data) => ({ ...data, _method: 'put' }));
+            form.post(`/inventory/${editingItem.id}`, {
                 ...options,
                 onFinish: () => form.transform((data) => data),
             });
