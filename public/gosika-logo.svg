@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 48" width="200" height="48" fill="none">
+  <!-- GOSIKA Icon Mark -->
+  <rect x="2" y="4" width="40" height="40" rx="10" fill="#FF5500"/>
+  <path d="M27 17H17C14.7909 17 13 18.7909 13 21V27C13 29.2091 14.7909 31 17 31H27C28.1046 31 29 30.1046 29 29V24H22V27H26V28.5H17.5C16.6716 28.5 16 27.8284 16 27V21C16 20.1716 16.6716 19.5 17.5 19.5H26.5C27.3284 19.5 28 20.1716 28 21V22H30.5V21C30.5 18.7909 28.9 17 27 17Z" fill="#FFFFFF"/>
+  
+  <!-- Text: GOSIKA -->
+  <text x="52" y="27" font-family="'Inter', sans-serif" font-size="22" font-weight="800" fill="#202124" letter-spacing="-0.5">GOSIKA</text>
+  <text x="52" y="38" font-family="'Inter', sans-serif" font-size="8.5" font-weight="600" fill="#FF5500" letter-spacing="2">OFFICE SUITE</text>
+</svg>

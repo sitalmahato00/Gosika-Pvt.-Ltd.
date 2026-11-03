@@ -1,0 +1,35 @@
+<?php
+
+use Illuminate\Database\Migrations\Migration;
+use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\Schema;
+
+return new class extends Migration
+{
+    public function up(): void
+    {
+        Schema::create('documents', function (Blueprint $table) {
+            $table->id();
+            $table->string('document_number')->unique(); // e.g. GSK-DOC-2026-001
+            $table->string('title');
+            $table->string('category'); // company, employee, contract, agreement, finance, policy
+            $table->foreignId('employee_id')->nullable()->constrained('employees')->nullOnDelete();
+            $table->foreignId('project_id')->nullable()->constrained('projects')->nullOnDelete();
+            $table->string('file_path');
+            $table->string('file_name');
+            $table->string('file_type')->nullable(); // pdf, docx, png, etc.
+            $table->integer('file_size_kb')->default(0);
+            $table->date('issue_date')->nullable();
+            $table->date('expiry_date')->nullable();
+            $table->string('status')->default('active'); // active, expired, archived
+            $table->text('notes')->nullable();
+            $table->foreignId('uploaded_by')->nullable()->constrained('users')->nullOnDelete();
+            $table->timestamps();
+        });
+    }
+
+    public function down(): void
+    {
+        Schema::dropIfExists('documents');
+    }
+};
