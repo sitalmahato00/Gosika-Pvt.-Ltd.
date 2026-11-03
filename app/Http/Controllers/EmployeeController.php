@@ -82,7 +82,7 @@ class EmployeeController extends Controller
             'designation_id' => ['required', 'exists:designations,id'],
             'employment_type' => ['required', 'string', 'in:full_time,part_time,contract,intern'],
             'joining_date' => ['required', 'date'],
-            'basic_salary' => ['required', 'numeric', 'min:0'],
+            'basic_salary' => ['nullable', 'numeric', 'min:0'],
             'bank_name' => ['nullable', 'string', 'max:100'],
             'bank_account_no' => ['nullable', 'string', 'max:50'],
             'bank_branch' => ['nullable', 'string', 'max:100'],
@@ -175,7 +175,7 @@ class EmployeeController extends Controller
             'joining_date' => ['required', 'date'],
             'exit_date' => ['nullable', 'date'],
             'exit_reason' => ['nullable', 'string'],
-            'basic_salary' => ['required', 'numeric', 'min:0'],
+            'basic_salary' => ['nullable', 'numeric', 'min:0'],
             'bank_name' => ['nullable', 'string', 'max:100'],
             'bank_account_no' => ['nullable', 'string', 'max:50'],
             'bank_branch' => ['nullable', 'string', 'max:100'],
@@ -230,7 +230,7 @@ class EmployeeController extends Controller
                 $emp->phone,
                 strtoupper(str_replace('_', ' ', $emp->employment_type)),
                 $emp->joining_date ? $emp->joining_date->format('Y-m-d') : 'N/A',
-                number_format($emp->basic_salary, 2),
+                $emp->basic_salary === null ? 'N/A' : number_format((float) $emp->basic_salary, 2),
                 strtoupper($emp->status),
             ];
         }

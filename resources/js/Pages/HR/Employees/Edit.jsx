@@ -250,10 +250,11 @@ export default function Edit({ employee, departments }) {
                         </div>
 
                         <div>
-                            <label className="block text-xs font-bold text-gray-700 mb-1">Basic Salary (NPR) *</label>
+                            <label className="block text-xs font-bold text-gray-700 mb-1">Basic Salary (NPR)</label>
                             <input
                                 type="number"
-                                required
+                                min="0"
+                                step="0.01"
                                 value={data.basic_salary}
                                 onChange={(e) => setData('basic_salary', e.target.value)}
                                 className="w-full px-3 py-2 text-xs border border-gray-200 rounded-lg focus:ring-1 focus:ring-[#FF5500] font-mono font-bold"

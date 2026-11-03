@@ -223,7 +223,7 @@ export default function Index({ employees, departments, filters }) {
                                         </td>
                                         <td className="px-5 py-3.5 whitespace-nowrap">
                                             <p className="text-xs font-bold text-gray-900 font-mono">
-                                                रू {Number(emp.basic_salary).toLocaleString()}
+                                                {emp.basic_salary === null ? 'Not set' : `रू ${Number(emp.basic_salary).toLocaleString()}`}
                                             </p>
                                             <p className="text-[10px] text-gray-400 uppercase">
                                                 {emp.employment_type?.replace('_', ' ')}

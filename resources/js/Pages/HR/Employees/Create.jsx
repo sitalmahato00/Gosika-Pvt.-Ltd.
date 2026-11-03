@@ -345,10 +345,9 @@ export default function Create({ departments }) {
                     <div className="grid grid-cols-1 sm:grid-cols-4 gap-4">
                         {/* Basic Salary */}
                         <div>
-                            <label className="block text-xs font-bold text-gray-700 mb-1">Basic Monthly Salary (NPR) *</label>
+                            <label className="block text-xs font-bold text-gray-700 mb-1">Basic Monthly Salary (NPR)</label>
                             <input
                                 type="number"
-                                required
                                 min="0"
                                 step="100"
                                 value={data.basic_salary}
@@ -356,6 +355,7 @@ export default function Create({ departments }) {
                                 placeholder="85000"
                                 className="w-full px-3 py-2 text-xs border border-gray-200 rounded-lg focus:ring-1 focus:ring-[#FF5500] font-mono font-bold"
                             />
+                            <p className="text-[10px] text-gray-500 mt-1">Optional. Employees without a salary are skipped when generating payroll.</p>
                             {errors.basic_salary && <p className="text-xs text-red-600 mt-1">{errors.basic_salary}</p>}
                         </div>
 

@@ -245,7 +245,7 @@ export default function Show({
                             <div>
                                 <span className="text-gray-400">Basic Monthly Salary:</span>
                                 <p className="font-black text-[#FF5500] text-base font-mono">
-                                    NPR {Number(employee.basic_salary).toLocaleString()}
+                                    {employee.basic_salary === null ? 'Not set' : `NPR ${Number(employee.basic_salary).toLocaleString()}`}
                                 </p>
                             </div>
                             <div className="grid grid-cols-2 gap-3 pt-2 border-t border-gray-100">

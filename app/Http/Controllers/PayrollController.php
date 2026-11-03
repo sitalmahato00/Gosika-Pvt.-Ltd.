@@ -65,7 +65,9 @@ class PayrollController extends Controller
         $year = $validated['year'];
         $periodName = Carbon::createFromDate($year, $month, 1)->format('F Y');
 
-        $employees = Employee::where('status', 'active')->get();
+        $employees = Employee::where('status', 'active')
+            ->whereNotNull('basic_salary')
+            ->get();
         $generatedCount = 0;
 
         DB::transaction(function () use ($employees, $month, $year, $periodName, $validated, &$generatedCount) {

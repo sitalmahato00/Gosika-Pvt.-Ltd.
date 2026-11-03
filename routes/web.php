@@ -57,6 +57,8 @@ Route::middleware('auth')->group(function () {
     Route::post('/attendance/single', [AttendanceController::class, 'markSingle'])->name('attendance.single');
     Route::post('/attendance/batch', [AttendanceController::class, 'markBatch'])->name('attendance.batch');
     Route::get('/attendance/calendar', [AttendanceController::class, 'calendar'])->name('attendance.calendar');
+    Route::get('/attendance/history', [AttendanceController::class, 'history'])->name('attendance.history');
+    Route::put('/attendance/{attendance}', [AttendanceController::class, 'update'])->name('attendance.update');
     Route::get('/attendance/export-csv', [AttendanceController::class, 'exportCsv'])->name('attendance.export.csv');
 
     // HR - Leave

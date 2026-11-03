@@ -122,23 +122,99 @@ class AttendanceController extends Controller
 
     public function calendar(Request $request)
     {
-        $month = (int) $request->input('month', Carbon::now()->month);
-        $year = (int) $request->input('year', Carbon::now()->year);
+        $validated = $request->validate([
+            'month' => ['nullable', 'integer', 'between:1,12'],
+            'year' => ['nullable', 'integer', 'between:2000,2100'],
+        ]);
+        $month = (int) ($validated['month'] ?? Carbon::now()->month);
+        $year = (int) ($validated['year'] ?? Carbon::now()->year);
 
         $startDate = Carbon::createFromDate($year, $month, 1)->startOfMonth();
         $endDate = $startDate->copy()->endOfMonth();
 
-        $attendances = Attendance::with('employee.department')
-            ->whereBetween('date', [$startDate->format('Y-m-d'), $endDate->format('Y-m-d')])
-            ->get();
+        $attendances = Attendance::whereBetween('date', [$startDate->toDateString(), $endDate->toDateString()])
+            ->get(['date', 'status']);
+
+        $daySummaries = [];
+        foreach ($attendances as $attendance) {
+            $date = $attendance->date->toDateString();
+            $daySummaries[$date] ??= [
+                'records' => 0,
+                'present' => 0,
+                'late' => 0,
+                'half_day' => 0,
+                'absent' => 0,
+                'on_leave' => 0,
+                'holiday' => 0,
+            ];
+            $daySummaries[$date]['records']++;
+            $daySummaries[$date][$attendance->status]++;
+        }
 
         return Inertia::render('HR/Attendance/Calendar', [
             'month' => $month,
             'year' => $year,
             'monthName' => $startDate->format('F Y'),
-            'attendances' => $attendances,
+            'daySummaries' => $daySummaries,
             'daysInMonth' => $startDate->daysInMonth,
+            'leadingDays' => $startDate->dayOfWeek,
         ]);
+    }
+
+    public function history(Request $request)
+    {
+        $validated = $request->validate([
+            'date' => ['required', 'date_format:Y-m-d'],
+        ]);
+        $date = $validated['date'];
+        $selectedDate = Carbon::createFromFormat('Y-m-d', $date);
+        $attendances = Attendance::with(['employee.department', 'correctedByUser:id,name'])
+            ->whereDate('date', $date)
+            ->join('employees', 'attendances.employee_id', '=', 'employees.id')
+            ->orderBy('employees.full_name')
+            ->select('attendances.*')
+            ->get();
+
+        return Inertia::render('HR/Attendance/History', [
+            'selectedDate' => $date,
+            'dateLabel' => $selectedDate->format('l, F j, Y'),
+            'attendances' => $attendances,
+            'stats' => [
+                'records' => $attendances->count(),
+                'present' => $attendances->where('status', 'present')->count(),
+                'late' => $attendances->where('status', 'late')->count(),
+                'half_day' => $attendances->where('status', 'half_day')->count(),
+                'absent' => $attendances->where('status', 'absent')->count(),
+                'on_leave' => $attendances->where('status', 'on_leave')->count(),
+                'holiday' => $attendances->where('status', 'holiday')->count(),
+            ],
+        ]);
+    }
+
+    public function update(Request $request, Attendance $attendance)
+    {
+        $validated = $request->validate([
+            'status' => ['required', 'in:present,absent,late,half_day,holiday,on_leave'],
+            'clock_in' => ['nullable', 'date_format:H:i'],
+            'clock_out' => ['nullable', 'date_format:H:i'],
+            'total_hours' => ['required', 'numeric', 'min:0', 'max:24'],
+            'notes' => ['nullable', 'string'],
+        ]);
+
+        $attendance->update([
+            ...$validated,
+            'is_corrected' => true,
+            'corrected_by' => auth()->id(),
+        ]);
+
+        AuditLog::log(
+            'update',
+            'attendance',
+            $attendance->id,
+            "Corrected attendance for Employee ID {$attendance->employee_id} on {$attendance->date->toDateString()}"
+        );
+
+        return back()->with('success', 'Attendance history updated successfully.');
     }
 
     public function exportCsv(Request $request, ReportService $reportService)
